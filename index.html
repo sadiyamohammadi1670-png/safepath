@@ -336,13 +336,13 @@
       <div>
         <div class="section-label">Select City</div>
         <select id="city-select">
-          <option value="delhi">New Delhi</option>
-          <option value="mumbai">Mumbai</option>
-          <option value="bangalore">Bangalore</option>
-          <option value="chennai">Chennai</option>
-          <option value="kolkata">Kolkata</option>
-          <option value="hyderabad">Hyderabad</option>
-        </select>
+  <option value="bangalore">Bangalore</option>
+  <option value="hyderabad">Hyderabad</option>
+  <option value="kalaburagi">Kalaburagi</option>
+  <option value="bidar">Bidar</option>
+  <option value="sedam">Sedam</option>
+  <option value="bijapur">Bijapur (Vijayapura)</option>
+</select>
       </div>
 
       <div>
@@ -449,66 +449,18 @@
 // Dijkstra minimises: distance * (11 - safety_score)
 // → prefers short AND safe roads
 // ════════════════════════════════════════════
-const CITIES = {
-  delhi: {
-    name: "New Delhi",
-    nodes: {
-      A: { label:"Connaught Place", x:0.50, y:0.20, zone:"commercial" },
-      B: { label:"Karol Bagh", x:0.28, y:0.28, zone:"residential" },
-      C: { label:"Lajpat Nagar", x:0.65, y:0.40, zone:"market" },
-      D: { label:"Hauz Khas", x:0.40, y:0.55, zone:"upscale" },
-      E: { label:"Saket", x:0.55, y:0.68, zone:"mall" },
-      F: { label:"Vasant Kunj", x:0.30, y:0.75, zone:"residential" },
-      G: { label:"Dwarka", x:0.12, y:0.60, zone:"suburb" },
-      H: { label:"RK Puram", x:0.42, y:0.70, zone:"govt" },
-    },
-    edges: [
-      ["A","B", 4.2, 8], ["A","C", 5.5, 7], ["A","D", 7.0, 9],
-      ["B","G", 8.1, 5], ["B","D", 5.8, 7], ["C","E", 4.3, 6],
-      ["D","E", 3.1, 9], ["D","H", 2.8, 8], ["E","F", 5.2, 7],
-      ["E","H", 2.5, 8], ["F","G", 6.3, 5], ["F","H", 3.8, 8],
-      ["G","H", 7.2, 4],
-    ],
-    incidents: [
-      { node:"G", type:"danger", desc:"Poorly lit stretch after 9pm" },
-      { node:"B", type:"warn", desc:"Crowded market area - pickpockets" },
-      { node:"C", type:"warn", desc:"Limited CCTV on connecting lane" },
-    ]
-  },
-  mumbai: {
-    name: "Mumbai",
-    nodes: {
-      A: { label:"CST", x:0.55, y:0.15, zone:"transport" },
-      B: { label:"Dadar", x:0.42, y:0.30, zone:"market" },
-      C: { label:"Bandra", x:0.28, y:0.45, zone:"upscale" },
-      D: { label:"Andheri", x:0.20, y:0.60, zone:"commercial" },
-      E: { label:"Powai", x:0.60, y:0.50, zone:"residential" },
-      F: { label:"Juhu", x:0.15, y:0.72, zone:"beach" },
-      G: { label:"Borivali", x:0.18, y:0.82, zone:"suburb" },
-      H: { label:"Thane", x:0.72, y:0.68, zone:"suburb" },
-    },
-    edges: [
-      ["A","B", 5.0, 8], ["A","E", 9.5, 7], ["B","C", 6.2, 7],
-      ["B","E", 7.8, 8], ["C","D", 4.5, 8], ["C","F", 5.3, 6],
-      ["D","F", 4.1, 7], ["D","G", 5.8, 6], ["E","H", 7.2, 7],
-      ["F","G", 6.5, 5], ["G","H", 12.0, 6],
-    ],
-    incidents: [
-      { node:"F", type:"warn", desc:"Beach area - limit solo walks at night" },
-      { node:"G", type:"warn", desc:"Isolated stretches near forest" },
-    ]
-  },
+  const CITIES = {
   bangalore: {
     name: "Bangalore",
     nodes: {
-      A: { label:"MG Road", x:0.50, y:0.22, zone:"commercial" },
-      B: { label:"Indiranagar", x:0.68, y:0.30, zone:"upscale" },
-      C: { label:"Koramangala", x:0.60, y:0.50, zone:"upscale" },
-      D: { label:"Jayanagar", x:0.40, y:0.60, zone:"residential" },
-      E: { label:"Electronic City",x:0.55, y:0.82, zone:"tech" },
-      F: { label:"Whitefield", x:0.82, y:0.55, zone:"tech" },
-      G: { label:"Yeshwanthpur", x:0.25, y:0.35, zone:"commercial" },
-      H: { label:"Banashankari", x:0.30, y:0.72, zone:"residential" },
+      A: { label:"MG Road",        x:0.50, y:0.20, zone:"commercial" },
+      B: { label:"Indiranagar",    x:0.68, y:0.30, zone:"upscale" },
+      C: { label:"Koramangala",    x:0.60, y:0.48, zone:"upscale" },
+      D: { label:"Jayanagar",      x:0.40, y:0.58, zone:"residential" },
+      E: { label:"Electronic City",x:0.55, y:0.80, zone:"tech" },
+      F: { label:"Whitefield",     x:0.82, y:0.52, zone:"tech" },
+      G: { label:"Yeshwanthpur",   x:0.25, y:0.35, zone:"commercial" },
+      H: { label:"Banashankari",   x:0.30, y:0.70, zone:"residential" },
     },
     edges: [
       ["A","B", 4.5, 9], ["A","G", 5.0, 8], ["B","C", 5.5, 9],
@@ -516,67 +468,136 @@ const CITIES = {
       ["D","H", 4.3, 8], ["D","E", 7.5, 7], ["E","H", 5.8, 7],
       ["F","E", 9.0, 7], ["G","D", 6.2, 7], ["G","H", 8.5, 6],
     ],
-    incidents: []
+    incidents: [
+      { node:"E", type:"warn", desc:"Isolated stretch on highway after 10pm" },
+      { node:"G", type:"warn", desc:"Crowded market — limited lighting at night" },
+    ]
   },
-  chennai: {
-    name:"Chennai", nodes:{
-      A:{label:"T Nagar",x:0.45,y:0.25,zone:"commercial"},
-      B:{label:"Anna Nagar",x:0.25,y:0.22,zone:"residential"},
-      C:{label:"Adyar",x:0.55,y:0.65,zone:"residential"},
-      D:{label:"Velachery",x:0.50,y:0.78,zone:"residential"},
-      E:{label:"Guindy",x:0.38,y:0.55,zone:"industrial"},
-      F:{label:"OMR",x:0.78,y:0.70,zone:"tech"},
-      G:{label:"Tambaram",x:0.35,y:0.88,zone:"suburb"},
-      H:{label:"Porur",x:0.18,y:0.58,zone:"residential"},
-    },
-    edges:[
-      ["A","B",5,8],["A","E",4.5,8],["A","C",6,7],
-      ["B","H",6,7],["C","D",3.5,8],["C","F",6,7],
-      ["D","G",5,6],["D","F",5.5,8],["E","H",5,7],
-      ["E","D",6,7],["F","G",8,6],["G","H",10,5],
-    ],
-    incidents:[{node:"G",type:"warn",desc:"Poorly lit suburb roads"}]
-  },
-  kolkata: {
-    name:"Kolkata",nodes:{
-      A:{label:"Esplanade",x:0.52,y:0.25,zone:"commercial"},
-      B:{label:"Howrah",x:0.32,y:0.25,zone:"transport"},
-      C:{label:"Salt Lake",x:0.75,y:0.30,zone:"residential"},
-      D:{label:"Park Street",x:0.55,y:0.42,zone:"upscale"},
-      E:{label:"Jadavpur",x:0.58,y:0.68,zone:"educational"},
-      F:{label:"New Town",x:0.82,y:0.55,zone:"tech"},
-      G:{label:"Behala",x:0.30,y:0.72,zone:"residential"},
-      H:{label:"Barasat",x:0.80,y:0.18,zone:"suburb"},
-    },
-    edges:[
-      ["A","B",4,6],["A","D",3,8],["A","C",6,8],
-      ["B","G",8,5],["C","F",5.5,8],["C","H",6,7],
-      ["D","E",5,8],["D","G",7,6],["E","F",6,7],
-      ["E","G",4.5,7],["F","H",8,7],["G","H",14,5],
-    ],
-    incidents:[{node:"B",type:"warn",desc:"Crowded & dim near station"},{node:"G",type:"danger",desc:"Poor lighting & isolation risk"}]
-  },
-  hyderabad: {
-    name:"Hyderabad",nodes:{
-      A:{label:"Charminar",x:0.50,y:0.30,zone:"heritage"},
-      B:{label:"Banjara Hills",x:0.30,y:0.35,zone:"upscale"},
-      C:{label:"HITEC City",x:0.18,y:0.55,zone:"tech"},
-      D:{label:"Gachibowli",x:0.22,y:0.70,zone:"tech"},
-      E:{label:"Jubilee Hills",x:0.35,y:0.52,zone:"upscale"},
-      F:{label:"LB Nagar",x:0.70,y:0.72,zone:"residential"},
-      G:{label:"Secunderabad",x:0.65,y:0.20,zone:"commercial"},
-      H:{label:"Kukatpally",x:0.20,y:0.32,zone:"residential"},
-    },
-    edges:[
-      ["A","G",5,7],["A","F",7,6],["A","E",6.5,7],
-      ["B","E",4,9],["B","H",5,8],["C","D",4.5,8],
-      ["C","H",3.5,8],["D","E",6,8],["D","F",7.5,7],
-      ["E","C",5.5,9],["F","G",8,6],["G","H",9,7],
-    ],
-    incidents:[{node:"A",type:"warn",desc:"Old city - caution after 10pm"}]
-  }
-};
 
+  hyderabad: {
+    name: "Hyderabad",
+    nodes: {
+      A: { label:"Charminar",      x:0.50, y:0.30, zone:"heritage" },
+      B: { label:"Banjara Hills",  x:0.30, y:0.35, zone:"upscale" },
+      C: { label:"HITEC City",     x:0.18, y:0.55, zone:"tech" },
+      D: { label:"Gachibowli",     x:0.22, y:0.70, zone:"tech" },
+      E: { label:"Jubilee Hills",  x:0.35, y:0.52, zone:"upscale" },
+      F: { label:"LB Nagar",       x:0.70, y:0.72, zone:"residential" },
+      G: { label:"Secunderabad",   x:0.65, y:0.20, zone:"commercial" },
+      H: { label:"Kukatpally",     x:0.20, y:0.32, zone:"residential" },
+    },
+    edges: [
+      ["A","G", 5.0, 7], ["A","F", 7.0, 6], ["A","E", 6.5, 7],
+      ["B","E", 4.0, 9], ["B","H", 5.0, 8], ["C","D", 4.5, 8],
+      ["C","H", 3.5, 8], ["D","E", 6.0, 8], ["D","F", 7.5, 7],
+      ["E","C", 5.5, 9], ["F","G", 8.0, 6], ["G","H", 9.0, 7],
+    ],
+    incidents: [
+      { node:"A", type:"warn",   desc:"Old city — caution after 10pm" },
+      { node:"F", type:"warn",   desc:"Limited CCTV on outer ring road" },
+    ]
+  },
+
+  kalaburagi: {
+    name: "Kalaburagi",
+    nodes: {
+      A: { label:"City Centre",      x:0.50, y:0.25, zone:"commercial" },
+      B: { label:"Sharana Basaveshwara",x:0.30, y:0.30, zone:"religious" },
+      C: { label:"Bus Stand Area",   x:0.65, y:0.35, zone:"transport" },
+      D: { label:"Aland Road",       x:0.72, y:0.55, zone:"residential" },
+      E: { label:"Super Market Area",x:0.45, y:0.55, zone:"market" },
+      F: { label:"University Area",  x:0.25, y:0.65, zone:"educational" },
+      G: { label:"Sedam Road",       x:0.55, y:0.78, zone:"suburb" },
+      H: { label:"Kalyan Nagar",     x:0.35, y:0.80, zone:"residential" },
+    },
+    edges: [
+      ["A","B", 3.2, 7], ["A","C", 2.8, 8], ["A","E", 3.5, 7],
+      ["B","F", 5.0, 6], ["C","D", 4.1, 7], ["C","E", 3.0, 7],
+      ["D","G", 5.5, 5], ["E","F", 4.2, 7], ["E","G", 5.8, 6],
+      ["F","H", 3.8, 7], ["G","H", 4.0, 6], ["H","B", 6.0, 6],
+    ],
+    incidents: [
+      { node:"G", type:"danger", desc:"Sedam Road — very poor lighting after dark" },
+      { node:"D", type:"warn",   desc:"Aland Road — isolated stretch, limited patrol" },
+      { node:"B", type:"warn",   desc:"Crowded near temple — pickpocket risk" },
+    ]
+  },
+
+  bidar: {
+    name: "Bidar",
+    nodes: {
+      A: { label:"Bidar Fort Area",  x:0.48, y:0.20, zone:"heritage" },
+      B: { label:"Old Town",         x:0.35, y:0.32, zone:"residential" },
+      C: { label:"Bus Stand",        x:0.60, y:0.35, zone:"transport" },
+      D: { label:"Udgir Road",       x:0.75, y:0.52, zone:"suburb" },
+      E: { label:"Chowrasta",        x:0.48, y:0.50, zone:"commercial" },
+      F: { label:"Naubad Area",      x:0.28, y:0.62, zone:"residential" },
+      G: { label:"Bhalki Road",      x:0.55, y:0.75, zone:"suburb" },
+      H: { label:"College Area",     x:0.38, y:0.78, zone:"educational" },
+    },
+    edges: [
+      ["A","B", 2.5, 6], ["A","C", 3.0, 7], ["A","E", 3.5, 7],
+      ["B","F", 4.0, 6], ["C","D", 4.8, 5], ["C","E", 2.8, 7],
+      ["D","G", 5.2, 4], ["E","F", 3.8, 6], ["E","G", 5.0, 5],
+      ["F","H", 3.2, 7], ["G","H", 3.8, 5], ["H","B", 5.5, 6],
+    ],
+    incidents: [
+      { node:"D", type:"danger", desc:"Udgir Road — no street lights, avoid at night" },
+      { node:"G", type:"danger", desc:"Bhalki Road — isolated, no CCTV coverage" },
+      { node:"A", type:"warn",   desc:"Fort area — poor lighting after sunset" },
+    ]
+  },
+
+  sedam: {
+    name: "Sedam",
+    nodes: {
+      A: { label:"Sedam Town Centre", x:0.50, y:0.28, zone:"commercial" },
+      B: { label:"Main Bazaar",       x:0.35, y:0.38, zone:"market" },
+      C: { label:"Bus Depot",         x:0.65, y:0.38, zone:"transport" },
+      D: { label:"Kalaburagi Road",   x:0.78, y:0.55, zone:"suburb" },
+      E: { label:"Temple Road",       x:0.48, y:0.52, zone:"religious" },
+      F: { label:"Residential Block", x:0.28, y:0.65, zone:"residential" },
+      G: { label:"Outer Ring",        x:0.58, y:0.75, zone:"suburb" },
+      H: { label:"School Area",       x:0.38, y:0.80, zone:"educational" },
+    },
+    edges: [
+      ["A","B", 1.8, 7], ["A","C", 2.2, 7], ["A","E", 2.5, 6],
+      ["B","F", 3.0, 6], ["C","D", 3.8, 4], ["C","E", 2.0, 6],
+      ["D","G", 4.5, 3], ["E","F", 3.2, 6], ["E","G", 4.0, 5],
+      ["F","H", 2.8, 7], ["G","H", 3.5, 4], ["H","B", 4.2, 6],
+    ],
+    incidents: [
+      { node:"D", type:"danger", desc:"Highway stretch — no lighting, no patrol" },
+      { node:"G", type:"danger", desc:"Outer ring road — completely isolated at night" },
+      { node:"C", type:"warn",   desc:"Bus depot area — crowded and poorly lit" },
+    ]
+  },
+
+  bijapur: {
+    name: "Bijapur (Vijayapura)",
+    nodes: {
+      A: { label:"Gol Gumbaz Area",   x:0.50, y:0.22, zone:"heritage" },
+      B: { label:"City Market",       x:0.35, y:0.35, zone:"market" },
+      C: { label:"Bus Stand",         x:0.65, y:0.32, zone:"transport" },
+      D: { label:"Solapur Road",      x:0.78, y:0.50, zone:"suburb" },
+      E: { label:"Ibrahim Rauza",     x:0.30, y:0.52, zone:"heritage" },
+      F: { label:"Shivaji Nagar",     x:0.48, y:0.62, zone:"residential" },
+      G: { label:"Kolhapur Road",     x:0.60, y:0.78, zone:"suburb" },
+      H: { label:"University Road",   x:0.32, y:0.78, zone:"educational" },
+    },
+    edges: [
+      ["A","B", 2.8, 7], ["A","C", 3.2, 8], ["A","E", 3.0, 6],
+      ["B","E", 3.5, 6], ["C","D", 4.5, 5], ["C","F", 3.8, 7],
+      ["D","G", 5.0, 4], ["E","H", 4.8, 6], ["F","G", 4.2, 6],
+      ["F","H", 3.5, 7], ["G","H", 4.0, 5], ["H","B", 5.2, 6],
+    ],
+    incidents: [
+      { node:"D", type:"danger", desc:"Solapur Road — no CCTV, isolated stretch" },
+      { node:"G", type:"danger", desc:"Kolhapur Road — very dark, avoid at night" },
+      { node:"A", type:"warn",   desc:"Heritage area — limited patrol after 9pm" },
+    ]
+  },
+};
 // ════════════════════════════════════════════
 // STATE
 // ════════════════════════════════════════════
