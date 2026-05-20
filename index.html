@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SafePath — Women's Safety Route Finder</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --rose: #E8336D;
+      --rose-lt: #FF6B9D;
+      --blush: #FDE8EF;
+      --wine: #7B1040;
+      --night: #0F0A14;
+      --dusk: #1C1225;
+      --plum: #2E1A3B;
+      --soft: #F9F1F5;
+      --text: #2B1A2F;
+      --muted: #8C7A90;
+      --safe: #2ECC71;
+      --warn: #F39C12;
+      --danger: #E74C3C;
+      --glow: 0 0 30px rgba(232,51,109,0.25);
+    }
+
+    * { margin:0; padding:0; box-sizing:border-box; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--night);
+      color: #F0E8F5;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Animated bg ── */
+    body::before {
+      content:'';
+      position:fixed; inset:0; z-index:0;
+      background:
+        radial-gradient(ellipse 80% 50% at 15% 20%, rgba(123,16,64,0.35) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 85% 80%, rgba(232,51,109,0.20) 0%, transparent 55%),
+        radial-gradient(ellipse 50% 60% at 50% 50%, rgba(46,26,59,0.8) 0%, transparent 80%);
+      animation: bgPulse 8s ease-in-out infinite alternate;
+    }
+    @keyframes bgPulse {
+      from { opacity:1; }
+      to { opacity:0.7; }
+    }
+
+    /* ── Layout ── */
+    #app { position:relative; z-index:1; display:flex; flex-direction:column; min-height:100vh; }
+
+    /* ── Header ── */
+    header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:1.4rem 2.5rem;
+      border-bottom:1px solid rgba(232,51,109,0.2);
+      backdrop-filter: blur(12px);
+      background: rgba(15,10,20,0.6);
+      position:sticky; top:0; z-index:100;
+    }
+    .logo { display:flex; align-items:center; gap:0.75rem; }
+    .logo-icon {
+      width:40px; height:40px; border-radius:50%;
+      background: linear-gradient(135deg, var(--rose), var(--wine));
+      display:flex; align-items:center; justify-content:center;
+      font-size:1.2rem;
+      box-shadow: var(--glow);
+    }
+    .logo-text { font-family:'Playfair Display', serif; font-size:1.5rem; font-weight:700; }
+    .logo-text span { color: var(--rose-lt); }
+    .tagline { font-size:0.75rem; color: var(--muted); letter-spacing:0.12em; text-transform:uppercase; }
+    .header-badge {
+      background: rgba(232,51,109,0.15); border:1px solid rgba(232,51,109,0.3);
+      padding:0.4rem 1rem; border-radius:999px;
+      font-size:0.78rem; color: var(--rose-lt); letter-spacing:0.06em;
+    }
+
+    /* ── Main Grid ── */
+    main {
+      display:grid;
+      grid-template-columns: 360px 1fr;
+      grid-template-rows: auto 1fr;
+      gap:0;
+      flex:1;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      grid-row: 1 / 3;
+      background: rgba(28,18,37,0.85);
+      border-right:1px solid rgba(232,51,109,0.12);
+      padding:1.8rem 1.6rem;
+      display:flex; flex-direction:column; gap:1.4rem;
+      backdrop-filter: blur(8px);
+      overflow-y:auto; max-height:calc(100vh - 65px);
+    }
+
+    .section-label {
+      font-size:0.68rem; letter-spacing:0.15em; text-transform:uppercase;
+      color: var(--rose); font-weight:600; margin-bottom:0.5rem;
+    }
+
+    /* City selector */
+    .city-row { display:flex; flex-direction:column; gap:0.5rem; }
+    select, input[type=text] {
+      background: rgba(46,26,59,0.7);
+      border:1px solid rgba(232,51,109,0.2);
+      border-radius:10px; padding:0.65rem 1rem;
+      color:#F0E8F5; font-family:'DM Sans',sans-serif; font-size:0.9rem;
+      outline:none; transition:border-color 0.2s;
+      width:100%;
+    }
+    select:focus, input[type=text]:focus { border-color: var(--rose); }
+    select option { background:#1C1225; }
+
+    .route-inputs { display:flex; flex-direction:column; gap:0.6rem; }
+    .input-wrap { position:relative; }
+    .input-wrap .dot {
+      position:absolute; left:12px; top:50%; transform:translateY(-50%);
+      width:10px; height:10px; border-radius:50%;
+    }
+    .dot.start { background: var(--safe); box-shadow:0 0 8px var(--safe); }
+    .dot.end { background: var(--rose); box-shadow:0 0 8px var(--rose); }
+    .input-wrap input { padding-left:2.2rem; }
+
+    /* Filters */
+    .filters { display:flex; flex-direction:column; gap:0.5rem; }
+    .filter-item {
+      display:flex; align-items:center; justify-content:space-between;
+      background: rgba(46,26,59,0.5);
+      border:1px solid rgba(232,51,109,0.1);
+      border-radius:10px; padding:0.6rem 1rem;
+      cursor:pointer; transition:border-color 0.2s, background 0.2s;
+    }
+    .filter-item:hover { border-color:rgba(232,51,109,0.4); background:rgba(232,51,109,0.08); }
+    .filter-item.active { border-color: var(--rose); background:rgba(232,51,109,0.12); }
+    .filter-label { display:flex; align-items:center; gap:0.5rem; font-size:0.88rem; }
+    .toggle {
+      width:36px; height:20px; border-radius:999px;
+      background: rgba(46,26,59,0.8); border:1px solid rgba(232,51,109,0.3);
+      position:relative; transition:background 0.2s;
+    }
+    .toggle::after {
+      content:''; position:absolute; top:2px; left:2px;
+      width:14px; height:14px; border-radius:50%;
+      background:#8C7A90; transition:transform 0.2s, background 0.2s;
+    }
+    .filter-item.active .toggle { background:rgba(232,51,109,0.3); }
+    .filter-item.active .toggle::after { transform:translateX(16px); background:var(--rose); }
+
+    /* Buttons */
+    .btn-primary {
+      width:100%; padding:0.85rem;
+      background: linear-gradient(135deg, var(--rose), var(--wine));
+      border:none; border-radius:12px; cursor:pointer;
+      font-family:'DM Sans',sans-serif; font-size:0.95rem; font-weight:600;
+      color:#fff; letter-spacing:0.04em;
+      transition:transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 4px 20px rgba(232,51,109,0.35);
+    }
+    .btn-primary:hover { transform:translateY(-2px); box-shadow:0 6px 28px rgba(232,51,109,0.5); }
+    .btn-primary:active { transform:translateY(0); }
+    .btn-primary:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+
+    /* Safety legend */
+    .legend { display:flex; gap:1rem; flex-wrap:wrap; }
+    .leg { display:flex; align-items:center; gap:0.4rem; font-size:0.8rem; color:var(--muted); }
+    .leg-dot { width:10px; height:10px; border-radius:50%; }
+
+    /* ── Map area ── */
+    .map-container {
+      position:relative;
+      background: rgba(15,10,20,0.4);
+      overflow:hidden;
+    }
+    #map-canvas {
+      width:100%; height:100%;
+      display:block;
+    }
+    .map-overlay {
+      position:absolute; top:1rem; right:1rem;
+      display:flex; flex-direction:column; gap:0.5rem;
+    }
+    .map-btn {
+      width:38px; height:38px;
+      background:rgba(28,18,37,0.9); border:1px solid rgba(232,51,109,0.2);
+      border-radius:8px; cursor:pointer; color:#F0E8F5;
+      font-size:1.1rem; display:flex; align-items:center; justify-content:center;
+      transition:border-color 0.2s; backdrop-filter:blur(4px);
+    }
+    .map-btn:hover { border-color:var(--rose); }
+
+    /* ── Results Panel ── */
+    .results-panel {
+      background:rgba(28,18,37,0.85);
+      border-top:1px solid rgba(232,51,109,0.12);
+      padding:1.2rem 1.8rem;
+      display:flex; gap:1.5rem; align-items:stretch;
+      backdrop-filter:blur(8px); overflow-x:auto;
+    }
+
+    .route-card {
+      min-width:200px; flex:1;
+      background:rgba(46,26,59,0.6);
+      border:1px solid rgba(232,51,109,0.15);
+      border-radius:14px; padding:1rem 1.2rem;
+      cursor:pointer; transition:border-color 0.2s, transform 0.15s;
+      position:relative; overflow:hidden;
+    }
+    .route-card::before {
+      content:''; position:absolute; top:0; left:0; right:0; height:3px;
+      background:linear-gradient(90deg, var(--safe), transparent);
+    }
+    .route-card.warn::before { background:linear-gradient(90deg, var(--warn), transparent); }
+    .route-card.danger::before { background:linear-gradient(90deg, var(--danger), transparent); }
+    .route-card:hover { border-color:rgba(232,51,109,0.4); transform:translateY(-2px); }
+    .route-card.selected { border-color:var(--rose); }
+
+    .card-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:0.6rem; }
+    .card-name { font-family:'Playfair Display',serif; font-size:1rem; font-weight:700; }
+    .safety-badge {
+      font-size:0.68rem; font-weight:600; padding:0.2rem 0.55rem;
+      border-radius:999px; letter-spacing:0.06em;
+    }
+    .badge-safe { background:rgba(46,204,113,0.2); color:var(--safe); border:1px solid rgba(46,204,113,0.4); }
+    .badge-warn { background:rgba(243,156,18,0.2); color:var(--warn); border:1px solid rgba(243,156,18,0.4); }
+    .badge-danger { background:rgba(231,76,60,0.2); color:var(--danger); border:1px solid rgba(231,76,60,0.4); }
+
+    .card-stats { display:flex; gap:1rem; margin-top:0.4rem; }
+    .stat { font-size:0.78rem; color:var(--muted); }
+    .stat strong { color:#F0E8F5; font-size:0.9rem; }
+
+    /* ── Incident log ── */
+    .incidents {
+      min-width:260px; max-width:300px;
+      background:rgba(46,26,59,0.5);
+      border-radius:14px; padding:1rem 1.2rem;
+      border:1px solid rgba(232,51,109,0.1);
+    }
+    .incidents h4 { font-size:0.8rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--rose); margin-bottom:0.7rem; }
+    .incident-list { display:flex; flex-direction:column; gap:0.45rem; }
+    .incident {
+      display:flex; gap:0.5rem; align-items:flex-start;
+      font-size:0.78rem; color:var(--muted); line-height:1.4;
+    }
+    .inc-dot { width:6px; height:6px; border-radius:50%; margin-top:5px; flex-shrink:0; }
+
+    /* ── Loading state ── */
+    .loading-overlay {
+      position:absolute; inset:0; z-index:50;
+      background:rgba(15,10,20,0.8); backdrop-filter:blur(4px);
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      gap:1rem; opacity:0; pointer-events:none; transition:opacity 0.3s;
+    }
+    .loading-overlay.show { opacity:1; pointer-events:all; }
+    .spinner {
+      width:50px; height:50px; border-radius:50%;
+      border:3px solid rgba(232,51,109,0.2);
+      border-top-color:var(--rose);
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .loading-text { font-family:'Playfair Display',serif; font-size:1.1rem; color:var(--rose-lt); }
+    .loading-sub { font-size:0.8rem; color:var(--muted); }
+
+    /* ── Algorithm panel ── */
+    .algo-panel {
+      margin-top:auto;
+      background:rgba(123,16,64,0.15);
+      border:1px solid rgba(232,51,109,0.2);
+      border-radius:12px; padding:1rem;
+    }
+    .algo-panel h4 { font-size:0.72rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--rose); margin-bottom:0.6rem; }
+    .algo-steps { display:flex; flex-direction:column; gap:0.35rem; }
+    .algo-step {
+      display:flex; gap:0.6rem; align-items:center;
+      font-size:0.78rem; color:var(--muted);
+    }
+    .step-num {
+      width:20px; height:20px; border-radius:50%;
+      background:rgba(232,51,109,0.2); border:1px solid rgba(232,51,109,0.3);
+      display:flex; align-items:center; justify-content:center;
+      font-size:0.65rem; font-weight:700; color:var(--rose); flex-shrink:0;
+    }
+    .algo-step.active .step-num { background:var(--rose); color:#fff; }
+    .algo-step.done .step-num { background:var(--safe); border-color:var(--safe); color:#fff; }
+
+    /* ── Animations ── */
+    @keyframes fadeSlideIn {
+      from { opacity:0; transform:translateY(20px); }
+      to { opacity:1; transform:translateY(0); }
+    }
+    .fade-in { animation: fadeSlideIn 0.5s ease forwards; }
+
+    /* Pulse dot on map */
+    @keyframes pulse {
+      0% { r:8; opacity:1; }
+      100% { r:20; opacity:0; }
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width:5px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:rgba(232,51,109,0.3); border-radius:4px; }
+
+    /* ── Responsive ── */
+    @media (max-width:900px) {
+      main { grid-template-columns:1fr; }
+      .sidebar { max-height:none; }
+      .results-panel { flex-direction:column; }
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- Header -->
+  <header>
+    <div class="logo">
+      <div class="logo-icon">🛡️</div>
+      <div>
+        <div class="logo-text">Safe<span>Path</span></div>
+        <div class="tagline">Women's Safety Route Finder</div>
+      </div>
+    </div>
+    <div class="header-badge">🔴 Live Safety Data</div>
+  </header>
+
+  <main>
+
+    <!-- ── SIDEBAR ── -->
+    <aside class="sidebar">
+
+      <div>
+        <div class="section-label">Select City</div>
+        <select id="city-select">
+          <option value="delhi">New Delhi</option>
+          <option value="mumbai">Mumbai</option>
+          <option value="bangalore">Bangalore</option>
+          <option value="chennai">Chennai</option>
+          <option value="kolkata">Kolkata</option>
+          <option value="hyderabad">Hyderabad</option>
+        </select>
+      </div>
+
+      <div>
+        <div class="section-label">Route Points</div>
+        <div class="route-inputs">
+          <div class="input-wrap">
+            <div class="dot start"></div>
+            <input type="text" id="start-node" placeholder="Start location (e.g. A)" value="A"/>
+          </div>
+          <div class="input-wrap">
+            <div class="dot end"></div>
+            <input type="text" id="end-node" placeholder="Destination (e.g. F)" value="F"/>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="section-label">Safety Filters</div>
+        <div class="filters">
+          <div class="filter-item active" data-filter="cctv" onclick="toggleFilter(this)">
+            <div class="filter-label">📹 CCTV Coverage</div>
+            <div class="toggle"></div>
+          </div>
+          <div class="filter-item active" data-filter="lighting" onclick="toggleFilter(this)">
+            <div class="filter-label">💡 Street Lighting</div>
+            <div class="toggle"></div>
+          </div>
+          <div class="filter-item" data-filter="police" onclick="toggleFilter(this)">
+            <div class="filter-label">👮 Police Patrol Zone</div>
+            <div class="toggle"></div>
+          </div>
+          <div class="filter-item active" data-filter="crowd" onclick="toggleFilter(this)">
+            <div class="filter-label">👥 Crowded Areas</div>
+            <div class="toggle"></div>
+          </div>
+          <div class="filter-item" data-filter="avoid_night" onclick="toggleFilter(this)">
+            <div class="filter-label">🌙 Night Mode (avoid dark lanes)</div>
+            <div class="toggle"></div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="section-label">Legend</div>
+        <div class="legend">
+          <div class="leg"><div class="leg-dot" style="background:var(--safe)"></div> Safe</div>
+          <div class="leg"><div class="leg-dot" style="background:var(--warn)"></div> Caution</div>
+          <div class="leg"><div class="leg-dot" style="background:var(--danger)"></div> Danger</div>
+          <div class="leg"><div class="leg-dot" style="background:var(--rose)"></div> Best Route</div>
+        </div>
+      </div>
+
+      <button class="btn-primary" id="find-btn" onclick="findRoute()">
+        🛡️ Find Safest Route
+      </button>
+
+      <!-- Algorithm Steps Panel -->
+      <div class="algo-panel">
+        <h4>⚙️ Dijkstra's Algorithm</h4>
+        <div class="algo-steps" id="algo-steps">
+          <div class="algo-step" id="step-1"><div class="step-num">1</div> Initialize safety weights</div>
+          <div class="algo-step" id="step-2"><div class="step-num">2</div> Build adjacency graph</div>
+          <div class="algo-step" id="step-3"><div class="step-num">3</div> Priority queue (min-heap)</div>
+          <div class="algo-step" id="step-4"><div class="step-num">4</div> Relax edges iteratively</div>
+          <div class="algo-step" id="step-5"><div class="step-num">5</div> Extract optimal path</div>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- ── MAP ── -->
+    <div class="map-container">
+      <canvas id="map-canvas"></canvas>
+
+      <div class="map-overlay">
+        <div class="map-btn" onclick="zoomIn()" title="Zoom In">+</div>
+        <div class="map-btn" onclick="zoomOut()" title="Zoom Out">−</div>
+        <div class="map-btn" onclick="resetView()" title="Reset">⟳</div>
+      </div>
+
+      <!-- Loading -->
+      <div class="loading-overlay" id="loading">
+        <div class="spinner"></div>
+        <div class="loading-text">Computing safest path…</div>
+        <div class="loading-sub">Running Dijkstra's algorithm</div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ── RESULTS PANEL ── -->
+  <div class="results-panel" id="results-panel" style="display:none">
+    <div id="route-cards" style="display:flex; gap:1rem; flex:1; flex-wrap:wrap;"></div>
+    <div class="incidents" id="incident-panel"></div>
+  </div>
+
+</div>
+
+<script>
+// ════════════════════════════════════════════
+// DATA — City graphs with safety weights
+// Edge: [to, distance_km, safety_score(0-10)]
+// safety_score 10 = perfectly safe, 0 = very dangerous
+// Dijkstra minimises: distance * (11 - safety_score)
+// → prefers short AND safe roads
+// ════════════════════════════════════════════
+const CITIES = {
+  delhi: {
+    name: "New Delhi",
+    nodes: {
+      A: { label:"Connaught Place", x:0.50, y:0.20, zone:"commercial" },
+      B: { label:"Karol Bagh", x:0.28, y:0.28, zone:"residential" },
+      C: { label:"Lajpat Nagar", x:0.65, y:0.40, zone:"market" },
+      D: { label:"Hauz Khas", x:0.40, y:0.55, zone:"upscale" },
+      E: { label:"Saket", x:0.55, y:0.68, zone:"mall" },
+      F: { label:"Vasant Kunj", x:0.30, y:0.75, zone:"residential" },
+      G: { label:"Dwarka", x:0.12, y:0.60, zone:"suburb" },
+      H: { label:"RK Puram", x:0.42, y:0.70, zone:"govt" },
+    },
+    edges: [
+      ["A","B", 4.2, 8], ["A","C", 5.5, 7], ["A","D", 7.0, 9],
+      ["B","G", 8.1, 5], ["B","D", 5.8, 7], ["C","E", 4.3, 6],
+      ["D","E", 3.1, 9], ["D","H", 2.8, 8], ["E","F", 5.2, 7],
+      ["E","H", 2.5, 8], ["F","G", 6.3, 5], ["F","H", 3.8, 8],
+      ["G","H", 7.2, 4],
+    ],
+    incidents: [
+      { node:"G", type:"danger", desc:"Poorly lit stretch after 9pm" },
+      { node:"B", type:"warn", desc:"Crowded market area - pickpockets" },
+      { node:"C", type:"warn", desc:"Limited CCTV on connecting lane" },
+    ]
+  },
+  mumbai: {
+    name: "Mumbai",
+    nodes: {
+      A: { label:"CST", x:0.55, y:0.15, zone:"transport" },
+      B: { label:"Dadar", x:0.42, y:0.30, zone:"market" },
+      C: { label:"Bandra", x:0.28, y:0.45, zone:"upscale" },
+      D: { label:"Andheri", x:0.20, y:0.60, zone:"commercial" },
+      E: { label:"Powai", x:0.60, y:0.50, zone:"residential" },
+      F: { label:"Juhu", x:0.15, y:0.72, zone:"beach" },
+      G: { label:"Borivali", x:0.18, y:0.82, zone:"suburb" },
+      H: { label:"Thane", x:0.72, y:0.68, zone:"suburb" },
+    },
+    edges: [
+      ["A","B", 5.0, 8], ["A","E", 9.5, 7], ["B","C", 6.2, 7],
+      ["B","E", 7.8, 8], ["C","D", 4.5, 8], ["C","F", 5.3, 6],
+      ["D","F", 4.1, 7], ["D","G", 5.8, 6], ["E","H", 7.2, 7],
+      ["F","G", 6.5, 5], ["G","H", 12.0, 6],
+    ],
+    incidents: [
+      { node:"F", type:"warn", desc:"Beach area - limit solo walks at night" },
+      { node:"G", type:"warn", desc:"Isolated stretches near forest" },
+    ]
+  },
+  bangalore: {
+    name: "Bangalore",
+    nodes: {
+      A: { label:"MG Road", x:0.50, y:0.22, zone:"commercial" },
+      B: { label:"Indiranagar", x:0.68, y:0.30, zone:"upscale" },
+      C: { label:"Koramangala", x:0.60, y:0.50, zone:"upscale" },
+      D: { label:"Jayanagar", x:0.40, y:0.60, zone:"residential" },
+      E: { label:"Electronic City",x:0.55, y:0.82, zone:"tech" },
+      F: { label:"Whitefield", x:0.82, y:0.55, zone:"tech" },
+      G: { label:"Yeshwanthpur", x:0.25, y:0.35, zone:"commercial" },
+      H: { label:"Banashankari", x:0.30, y:0.72, zone:"residential" },
+    },
+    edges: [
+      ["A","B", 4.5, 9], ["A","G", 5.0, 8], ["B","C", 5.5, 9],
+      ["B","F", 8.2, 8], ["C","D", 4.0, 8], ["C","F", 6.1, 8],
+      ["D","H", 4.3, 8], ["D","E", 7.5, 7], ["E","H", 5.8, 7],
+      ["F","E", 9.0, 7], ["G","D", 6.2, 7], ["G","H", 8.5, 6],
+    ],
+    incidents: []
+  },
+  chennai: {
+    name:"Chennai", nodes:{
+      A:{label:"T Nagar",x:0.45,y:0.25,zone:"commercial"},
+      B:{label:"Anna Nagar",x:0.25,y:0.22,zone:"residential"},
+      C:{label:"Adyar",x:0.55,y:0.65,zone:"residential"},
+      D:{label:"Velachery",x:0.50,y:0.78,zone:"residential"},
+      E:{label:"Guindy",x:0.38,y:0.55,zone:"industrial"},
+      F:{label:"OMR",x:0.78,y:0.70,zone:"tech"},
+      G:{label:"Tambaram",x:0.35,y:0.88,zone:"suburb"},
+      H:{label:"Porur",x:0.18,y:0.58,zone:"residential"},
+    },
+    edges:[
+      ["A","B",5,8],["A","E",4.5,8],["A","C",6,7],
+      ["B","H",6,7],["C","D",3.5,8],["C","F",6,7],
+      ["D","G",5,6],["D","F",5.5,8],["E","H",5,7],
+      ["E","D",6,7],["F","G",8,6],["G","H",10,5],
+    ],
+    incidents:[{node:"G",type:"warn",desc:"Poorly lit suburb roads"}]
+  },
+  kolkata: {
+    name:"Kolkata",nodes:{
+      A:{label:"Esplanade",x:0.52,y:0.25,zone:"commercial"},
+      B:{label:"Howrah",x:0.32,y:0.25,zone:"transport"},
+      C:{label:"Salt Lake",x:0.75,y:0.30,zone:"residential"},
+      D:{label:"Park Street",x:0.55,y:0.42,zone:"upscale"},
+      E:{label:"Jadavpur",x:0.58,y:0.68,zone:"educational"},
+      F:{label:"New Town",x:0.82,y:0.55,zone:"tech"},
+      G:{label:"Behala",x:0.30,y:0.72,zone:"residential"},
+      H:{label:"Barasat",x:0.80,y:0.18,zone:"suburb"},
+    },
+    edges:[
+      ["A","B",4,6],["A","D",3,8],["A","C",6,8],
+      ["B","G",8,5],["C","F",5.5,8],["C","H",6,7],
+      ["D","E",5,8],["D","G",7,6],["E","F",6,7],
+      ["E","G",4.5,7],["F","H",8,7],["G","H",14,5],
+    ],
+    incidents:[{node:"B",type:"warn",desc:"Crowded & dim near station"},{node:"G",type:"danger",desc:"Poor lighting & isolation risk"}]
+  },
+  hyderabad: {
+    name:"Hyderabad",nodes:{
+      A:{label:"Charminar",x:0.50,y:0.30,zone:"heritage"},
+      B:{label:"Banjara Hills",x:0.30,y:0.35,zone:"upscale"},
+      C:{label:"HITEC City",x:0.18,y:0.55,zone:"tech"},
+      D:{label:"Gachibowli",x:0.22,y:0.70,zone:"tech"},
+      E:{label:"Jubilee Hills",x:0.35,y:0.52,zone:"upscale"},
+      F:{label:"LB Nagar",x:0.70,y:0.72,zone:"residential"},
+      G:{label:"Secunderabad",x:0.65,y:0.20,zone:"commercial"},
+      H:{label:"Kukatpally",x:0.20,y:0.32,zone:"residential"},
+    },
+    edges:[
+      ["A","G",5,7],["A","F",7,6],["A","E",6.5,7],
+      ["B","E",4,9],["B","H",5,8],["C","D",4.5,8],
+      ["C","H",3.5,8],["D","E",6,8],["D","F",7.5,7],
+      ["E","C",5.5,9],["F","G",8,6],["G","H",9,7],
+    ],
+    incidents:[{node:"A",type:"warn",desc:"Old city - caution after 10pm"}]
+  }
+};
+
+// ════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════
+let currentCity = 'delhi';
+let activeFilters = { cctv:true, lighting:true, police:false, crowd:true, avoid_night:false };
+let zoom = 1, panX = 0, panY = 0;
+let selectedRouteIdx = 0;
+let computedRoutes = [];
+let animFrame = null;
+let animT = 0;
+
+// ════════════════════════════════════════════
+// DIJKSTRA'S ALGORITHM (JS mirror of C impl)
+// Weight = distance * (11 - safety_score) * filter_multiplier
+// ════════════════════════════════════════════
+function computeWeight(dist, safety, filters) {
+  let penalty = (11 - safety); // lower safety = higher cost
+  if (filters.avoid_night && safety < 6) penalty *= 2.5;
+  if (filters.lighting && safety < 5) penalty *= 1.8;
+  if (filters.cctv && safety < 4) penalty *= 2.0;
+  return dist * penalty;
+}
+
+function dijkstra(graph, start, end, filters) {
+  const dist = {};
+  const prev = {};
+  const visited = new Set();
+
+  for (const n of Object.keys(graph.nodes)) {
+    dist[n] = Infinity;
+    prev[n] = null;
+  }
+  dist[start] = 0;
+
+  // Build adjacency
+  const adj = {};
+  for (const n of Object.keys(graph.nodes)) adj[n] = [];
+  for (const [u, v, d, s] of graph.edges) {
+    adj[u].push({ to:v, dist:d, safety:s });
+    adj[v].push({ to:u, dist:d, safety:s });
+  }
+
+  // Simple priority queue (array-based min-heap simulation)
+  const pq = [{ node:start, cost:0 }];
+
+  while (pq.length) {
+    pq.sort((a,b) => a.cost - b.cost);
+    const { node: u } = pq.shift();
+    if (visited.has(u)) continue;
+    visited.add(u);
+
+    for (const { to, dist: d, safety: s } of adj[u]) {
+      const w = computeWeight(d, s, filters);
+      const newD = dist[u] + w;
+      if (newD < dist[to]) {
+        dist[to] = newD;
+        prev[to] = { from:u, safety:s, dist:d };
+        pq.push({ node:to, cost:newD });
+      }
+    }
+  }
+
+  // Reconstruct
+  if (dist[end] === Infinity) return null;
+  const path = [];
+  let cur = end;
+  while (cur !== null) {
+    path.unshift({ node:cur, prev: prev[cur] });
+    cur = prev[cur] ? prev[cur].from : null;
+  }
+
+  // Compute totals
+  let totalDist = 0, safetySum = 0, edgeCount = 0;
+  for (const p of path) {
+    if (p.prev) { totalDist += p.prev.dist; safetySum += p.prev.safety; edgeCount++; }
+  }
+  const avgSafety = edgeCount > 0 ? safetySum / edgeCount : 0;
+
+  return { path, totalDist, avgSafety, weightedCost: dist[end] };
+}
+
+// Generate 3 route variants (different filter combos)
+function getThreeRoutes(graph, start, end) {
+  const routes = [
+    { label:"Safest Route", filters: {...activeFilters, avoid_night:true, lighting:true }, type:"safe" },
+    { label:"Fastest Route", filters: { cctv:false, lighting:false, police:false, crowd:false, avoid_night:false }, type:"fast" },
+    { label:"Balanced Route", filters: {...activeFilters }, type:"balanced" },
+  ];
+  return routes.map(r => {
+    const result = dijkstra(graph, start, end, r.filters);
+    return result ? { ...result, label:r.label, routeType:r.type } : null;
+  }).filter(Boolean);
+}
+
+// ════════════════════════════════════════════
+// CANVAS RENDERER
+// ════════════════════════════════════════════
+const canvas = document.getElementById('map-canvas');
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas() {
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width;
+  canvas.height = rect.height;
+}
+
+function nodePos(node) {
+  const city = CITIES[currentCity];
+  const n = city.nodes[node];
+  return {
+    x: n.x * canvas.width * zoom + panX,
+    y: n.y * canvas.height * zoom + panY
+  };
+}
+
+const ZONE_COLORS = {
+  commercial:"#E8336D", residential:"#7B52AB", upscale:"#2ECC71",
+  market:"#F39C12", tech:"#3498DB", transport:"#E74C3C",
+  mall:"#9B59B6", suburb:"#95A5A6", govt:"#1ABC9C",
+  beach:"#F1C40F", industrial:"#7F8C8D", heritage:"#E67E22",
+  educational:"#27AE60"
+};
+
+function draw() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  const city = CITIES[currentCity];
+
+  // ── Background grid ──
+  ctx.strokeStyle = 'rgba(232,51,109,0.05)';
+  ctx.lineWidth = 1;
+  const gridSize = 60 * zoom;
+  for (let x = panX % gridSize; x < canvas.width; x += gridSize) {
+    ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,canvas.height); ctx.stroke();
+  }
+  for (let y = panY % gridSize; y < canvas.height; y += gridSize) {
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(canvas.width,y); ctx.stroke();
+  }
+
+  // ── Edges ──
+  for (const [u, v, dist, safety] of city.edges) {
+    const p1 = nodePos(u), p2 = nodePos(v);
+    let color, width;
+
+    // Check if this edge is on selected route
+    const route = computedRoutes[selectedRouteIdx];
+    let onRoute = false;
+    if (route) {
+      for (let i = 0; i < route.path.length - 1; i++) {
+        const a = route.path[i].node, b = route.path[i+1].node;
+        if ((a===u && b===v)||(a===v && b===u)) { onRoute = true; break; }
+      }
+    }
+
+    if (onRoute) {
+      // Animated dashed route line
+      ctx.save();
+      ctx.setLineDash([12, 6]);
+      ctx.lineDashOffset = -animT * 0.5;
+      ctx.strokeStyle = 'rgba(232,51,109,0.9)';
+      ctx.lineWidth = 4 * zoom;
+      ctx.shadowColor = 'rgba(232,51,109,0.6)';
+      ctx.shadowBlur = 12;
+      ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.stroke();
+      ctx.restore();
+    } else {
+      const alpha = safety >= 8 ? 0.5 : safety >= 6 ? 0.4 : 0.3;
+      color = safety >= 8 ? `rgba(46,204,113,${alpha})`
+            : safety >= 6 ? `rgba(243,156,18,${alpha})`
+            : `rgba(231,76,60,${alpha})`;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = (2.5 + safety * 0.15) * zoom;
+      ctx.setLineDash([]);
+      ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.stroke();
+
+      // Distance label
+      const mx = (p1.x+p2.x)/2, my = (p1.y+p2.y)/2;
+      ctx.fillStyle = 'rgba(140,122,144,0.8)';
+      ctx.font = `${10*zoom}px DM Sans`;
+      ctx.textAlign = 'center';
+      ctx.fillText(`${dist}km`, mx, my-4);
+    }
+  }
+
+  // ── Nodes ──
+  for (const [id, node] of Object.entries(city.nodes)) {
+    const p = nodePos(id);
+    const r = 18 * zoom;
+
+    // Incident glow
+    const incident = city.incidents.find(i => i.node === id);
+
+    // Outer glow
+    const grd = ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,r*2);
+    const zoneColor = ZONE_COLORS[node.zone] || '#888';
+    if (incident) {
+      const gc = incident.type === 'danger' ? '231,76,60' : '243,156,18';
+      grd.addColorStop(0, `rgba(${gc},0.3)`);
+      grd.addColorStop(1, 'transparent');
+    } else {
+      grd.addColorStop(0, `${zoneColor}25`);
+      grd.addColorStop(1, 'transparent');
+    }
+    ctx.fillStyle = grd;
+    ctx.beginPath(); ctx.arc(p.x,p.y,r*2,0,Math.PI*2); ctx.fill();
+
+    // Node circle
+    ctx.beginPath(); ctx.arc(p.x,p.y,r,0,Math.PI*2);
+    ctx.fillStyle = 'rgba(28,18,37,0.9)';
+    ctx.fill();
+    ctx.strokeStyle = incident
+      ? (incident.type==='danger' ? '#E74C3C' : '#F39C12')
+      : zoneColor;
+    ctx.lineWidth = 2*zoom;
+    ctx.stroke();
+
+    // ID label
+    ctx.fillStyle = '#F0E8F5';
+    ctx.font = `bold ${13*zoom}px DM Sans`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(id, p.x, p.y);
+
+    // Name label below
+    ctx.fillStyle = 'rgba(240,232,245,0.75)';
+    ctx.font = `${10*zoom}px DM Sans`;
+    ctx.textBaseline = 'top';
+    ctx.fillText(node.label, p.x, p.y + r + 4*zoom);
+  }
+
+  // ── Start / End markers ──
+  const startId = document.getElementById('start-node').value.trim().toUpperCase();
+  const endId = document.getElementById('end-node').value.trim().toUpperCase();
+  if (city.nodes[startId]) drawMarker(nodePos(startId), '▶', '#2ECC71');
+  if (city.nodes[endId]) drawMarker(nodePos(endId), '✦', '#E8336D');
+
+  // Animate
+  animT++;
+  animFrame = requestAnimationFrame(draw);
+}
+
+function drawMarker(p, sym, color) {
+  const pulse = Math.sin(animT * 0.05) * 3;
+  ctx.beginPath();
+  ctx.arc(p.x, p.y, (28 + pulse) * zoom, 0, Math.PI*2);
+  ctx.fillStyle = `${color}20`;
+  ctx.fill();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2*zoom;
+  ctx.setLineDash([4,4]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.font = `${16*zoom}px Arial`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = color;
+  ctx.fillText(sym, p.x, p.y - 30*zoom);
+}
+
+// ════════════════════════════════════════════
+// UI INTERACTIONS
+// ════════════════════════════════════════════
+function toggleFilter(el) {
+  el.classList.toggle('active');
+  const key = el.dataset.filter;
+  activeFilters[key] = el.classList.contains('active');
+}
+
+document.getElementById('city-select').addEventListener('change', function() {
+  currentCity = this.value;
+  computedRoutes = [];
+  selectedRouteIdx = 0;
+  document.getElementById('results-panel').style.display = 'none';
+});
+
+async function findRoute() {
+  const city = CITIES[currentCity];
+  const start = document.getElementById('start-node').value.trim().toUpperCase();
+  const end = document.getElementById('end-node').value.trim().toUpperCase();
+
+  if (!city.nodes[start] || !city.nodes[end]) {
+    alert(`Please enter valid node IDs. Available: ${Object.keys(city.nodes).join(', ')}`);
+    return;
+  }
+  if (start === end) { alert('Start and destination must be different.'); return; }
+
+  // Show loading
+  document.getElementById('loading').classList.add('show');
+  document.getElementById('find-btn').disabled = true;
+
+  // Animate algo steps
+  const steps = document.querySelectorAll('.algo-step');
+  steps.forEach(s => s.classList.remove('active','done'));
+
+  await animateSteps(steps);
+
+  // Run algorithm
+  computedRoutes = getThreeRoutes(city, start, end);
+  selectedRouteIdx = 0;
+
+  document.getElementById('loading').classList.remove('show');
+  document.getElementById('find-btn').disabled = false;
+
+  if (!computedRoutes.length) {
+    alert('No route found between these nodes!'); return;
+  }
+
+  renderResults(city, start, end);
+}
+
+async function animateSteps(steps) {
+  for (let i = 0; i < steps.length; i++) {
+    steps[i].classList.add('active');
+    await sleep(300);
+    steps[i].classList.remove('active');
+    steps[i].classList.add('done');
+  }
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function renderResults(city, start, end) {
+  const panel = document.getElementById('results-panel');
+  const cards = document.getElementById('route-cards');
+  const incPanel = document.getElementById('incident-panel');
+
+  panel.style.display = 'flex';
+
+  // Route cards
+  cards.innerHTML = '';
+  computedRoutes.forEach((route, idx) => {
+    const safetyPct = Math.round(route.avgSafety * 10);
+    const type = route.avgSafety >= 7.5 ? 'safe' : route.avgSafety >= 6 ? 'warn' : 'danger';
+    const badge = type === 'safe' ? 'badge-safe' : type === 'warn' ? 'badge-warn' : 'badge-danger';
+    const label = type === 'safe' ? 'SAFE' : type === 'warn' ? 'CAUTION' : 'RISK';
+
+    const pathStr = route.path.map(p => {
+      const n = city.nodes[p.node];
+      return n ? n.label.split(' ')[0] : p.node;
+    }).join(' → ');
+
+    const card = document.createElement('div');
+    card.className = `route-card ${type} fade-in ${idx === 0 ? 'selected' : ''}`;
+    card.style.animationDelay = `${idx * 0.1}s`;
+    card.innerHTML = `
+      <div class="card-header">
+        <div class="card-name">${route.label}</div>
+        <div class="safety-badge ${badge}">${label}</div>
+      </div>
+      <div style="font-size:0.75rem; color:var(--muted); margin-bottom:0.6rem; line-height:1.5">${pathStr}</div>
+      <div class="card-stats">
+        <div class="stat"><strong>${route.totalDist.toFixed(1)} km</strong><br>Distance</div>
+        <div class="stat"><strong>${safetyPct}%</strong><br>Safety</div>
+        <div class="stat"><strong>${route.path.length - 1}</strong><br>Stops</div>
+      </div>
+    `;
+    card.onclick = () => {
+      document.querySelectorAll('.route-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      selectedRouteIdx = idx;
+    };
+    cards.appendChild(card);
+  });
+
+  // Incidents
+  const relevant = city.incidents;
+  incPanel.innerHTML = `
+    <h4>⚠️ Area Incidents</h4>
+    <div class="incident-list">
+      ${relevant.length === 0
+        ? '<div class="incident"><div class="inc-dot" style="background:var(--safe)"></div> No reported incidents in this city.</div>'
+        : relevant.map(i => `
+          <div class="incident">
+            <div class="inc-dot" style="background:${i.type==='danger'?'var(--danger)':'var(--warn)'}"></div>
+            <span><strong>${city.nodes[i.node]?.label || i.node}:</strong> ${i.desc}</span>
+          </div>`).join('')}
+    </div>
+  `;
+}
+
+function zoomIn() { zoom = Math.min(zoom * 1.25, 3); }
+function zoomOut() { zoom = Math.max(zoom / 1.25, 0.5); }
+function resetView() { zoom = 1; panX = 0; panY = 0; }
+
+// ── Pan ──
+let isDragging = false, dragStartX = 0, dragStartY = 0, startPanX = 0, startPanY = 0;
+canvas.addEventListener('mousedown', e => {
+  isDragging = true;
+  dragStartX = e.clientX; dragStartY = e.clientY;
+  startPanX = panX; startPanY = panY;
+});
+canvas.addEventListener('mousemove', e => {
+  if (!isDragging) return;
+  panX = startPanX + (e.clientX - dragStartX);
+  panY = startPanY + (e.clientY - dragStartY);
+});
+canvas.addEventListener('mouseup', () => isDragging = false);
+canvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  const delta = e.deltaY > 0 ? 0.9 : 1.1;
+  zoom = Math.max(0.4, Math.min(3, zoom * delta));
+}, { passive:false });
+
+// ── Init ──
+window.addEventListener('resize', () => { resizeCanvas(); });
+window.addEventListener('load', () => {
+  resizeCanvas();
+  draw();
+});
+</script>
+</body>
+</html>
+
